@@ -39,11 +39,13 @@ def add_heatmap(m, data, value_column, gradient):
 def generate_legend_html(title, color_scale):
     legend_html = f"""
     <div style="
-    background-color: white; border:2px solid grey; padding: 10px; font-size:14px;">
-    <h4>{title}</h4>
-    <i style="background: blue; width: 20px; height: 20px; display: inline-block;"></i> Low<br>
-    <i style="background: {color_scale[0.5]}; width: 20px; height: 20px; display: inline-block;"></i> Moderate<br>
-    <i style="background: {color_scale[1.0]}; width: 20px; height: 20px; display: inline-block;"></i> High<br>
+    position: fixed; 
+    bottom: 50px; right: 20px; width: 150px; height: 150px; 
+    background-color: white; z-index:1000; border:2px solid grey; padding: 10px; font-size:14px;">
+    <h4 style="margin-bottom:10px;">{title}</h4>
+    <div><span style="background: blue; width: 20px; height: 20px; display: inline-block;"></span> Low</div>
+    <div><span style="background: {color_scale[0.5]}; width: 20px; height: 20px; display: inline-block;"></span> Moderate</div>
+    <div><span style="background: {color_scale[1.0]}; width: 20px; height: 20px; display: inline-block;"></span> High</div>
     </div>
     """
     return legend_html
@@ -97,6 +99,11 @@ def create_map(glider_df, drone_df, selected_iterations, heatmap_opts):
         add_heatmap(m, combined_pm10_data, 'PM10', {0.0: 'blue', 0.5: 'yellow', 1.0: 'red'})
         legends += generate_legend_html("PM10", {0.5: 'yellow', 1.0: 'red'})
 
+    if heatmap_opts['pm5']:
+        pm5_data = glider_df[['Lat', 'Long', 'unknown']].rename(columns={'unknown': 'PM5'}).dropna()
+        add_heatmap(m, pm5_data, 'PM5', {0.0: 'blue', 0.5: 'yellow', 1.0: 'red'})
+        legends += generate_legend_html("PM5", {0.5: 'yellow', 1.0: 'red'})
+
     return m, legends
 
 # Main function for Streamlit app
@@ -138,13 +145,9 @@ def main():
         st.sidebar.subheader("Select Time Range for Drone Data")
         min_drone_time, max_drone_time = drone_data['Timestamp'].min(), drone_data['Timestamp'].max()
 
-        if pd.isnull(min_drone_time) or pd.isnull(max_drone_time):
-            st.error("Drone time data is missing or invalid.")
-            return
-
         selected_drone_time_range = st.sidebar.slider(
             "Select time range for Drone",
-            min_value=min_drone_time.to_pydatetime(),  
+            min_value=min_drone_time.to_pydatetime(),
             max_value=max_drone_time.to_pydatetime(),
             value=(min_drone_time.to_pydatetime(), max_drone_time.to_pydatetime()),
             format="YYYY-MM-DD HH:mm"
@@ -165,16 +168,18 @@ def main():
         'humidity': st.sidebar.checkbox("Humidity Heatmap", value=False),
         'temp': st.sidebar.checkbox("Temperature Heatmap", value=False),
         'pm25': st.sidebar.checkbox("PM2.5 Heatmap", value=False),
-        'pm10': st.sidebar.checkbox("PM10 Heatmap", value=False)
+        'pm10': st.sidebar.checkbox("PM10 Heatmap", value=False),
+        'pm5': st.sidebar.checkbox("PM5 Heatmap", value=False)  # Added PM5 option
     }
 
-    # Create map
+    # Create map (wider size)
     map_object, legends_html = create_map(glider_data_to_use, drone_data_to_use, selected_iterations, heatmap_opts)
 
-    st_folium(map_object, width=800, height=600)
+    # Larger map display
+    st_folium(map_object, width=1000, height=700)
 
     if legends_html:
-        st.components.v1.html(legends_html, height=200)
+        st.components.v1.html(legends_html, height=300)
 
 if __name__ == "__main__":
     main()
