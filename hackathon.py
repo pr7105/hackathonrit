@@ -3,6 +3,7 @@ import folium
 from folium.plugins import HeatMap
 import streamlit as st
 from streamlit_folium import st_folium
+import os  # Import os to handle file paths
 
 st.set_page_config(layout="wide")
 st.markdown("""
@@ -132,8 +133,12 @@ def create_map(glider_df, drone_df, selected_iterations, heatmap_opts):
 
 # Main function for Streamlit app
 def main():
-    glider_file = '/Users/petra/Desktop/glider.csv'
-    drone_file = '/Users/petra/Desktop/drone.csv'
+    # Get the directory of the current script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Specify file paths relative to the script's directory
+    glider_file = os.path.join(script_dir, 'glider.csv')
+    drone_file = os.path.join(script_dir, 'drone.csv')
 
     # Load data
     glider_data, drone_data = load_data(glider_file, drone_file)
@@ -211,6 +216,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
