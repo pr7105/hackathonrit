@@ -4,8 +4,35 @@ from folium.plugins import HeatMap
 import streamlit as st
 from streamlit_folium import st_folium
 
-# Configure the page layout to be wide
 st.set_page_config(layout="wide")
+st.markdown("""
+    <style>
+        .main .block-container {
+            padding-top: 0rem;
+            padding-bottom: 0rem;
+            padding-left: 0rem;
+            padding-right: 0rem;
+        }
+        .map-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .map-content {
+            flex: 1;
+            min-width: 0;  /* Prevent map from overflowing */
+            margin-right: 10px; /* Space between map and legend */
+        }
+        .legend-container {
+            width: 250px;
+            background-color: white;
+            padding: 10px;
+            border: 2px solid grey;
+            font-size: 12px;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
 # Function to load CSV data
 @st.cache_data
@@ -38,11 +65,8 @@ def add_heatmap(m, data, value_column, gradient):
 # Function to generate the legend text to display
 def generate_legend_html(title, color_scale):
     legend_html = f"""
-    <div style="
-    position: fixed; 
-    bottom: 50px; right: 20px; width: 150px; height: 150px; 
-    background-color: white; z-index:1000; border:2px solid grey; padding: 10px; font-size:14px;">
-    <h4 style="margin-bottom:10px;">{title}</h4>
+    <div class='legend-container'>
+    <h4 style="margin-bottom:5px;">{title}</h4>
     <div><span style="background: blue; width: 20px; height: 20px; display: inline-block;"></span> Low</div>
     <div><span style="background: {color_scale[0.5]}; width: 20px; height: 20px; display: inline-block;"></span> Moderate</div>
     <div><span style="background: {color_scale[1.0]}; width: 20px; height: 20px; display: inline-block;"></span> High</div>
@@ -127,19 +151,18 @@ def main():
         min_time, max_time = glider_data['time'].min(), glider_data['time'].max()
 
         if pd.isnull(min_time) or pd.isnull(max_time):
-            st.error("Glider time data is missing or invalid.")
-            return
+            st.sidebar.write("No valid glider data available.")
+        else:
+            selected_time_range = st.sidebar.slider(
+                "Select time range for Glider",
+                min_value=min_time.to_pydatetime(),
+                max_value=max_time.to_pydatetime(),
+                value=(min_time.to_pydatetime(), max_time.to_pydatetime()),
+                format="YYYY-MM-DD HH:mm"
+            )
 
-        selected_time_range = st.sidebar.slider(
-            "Select time range for Glider",
-            min_value=min_time.to_pydatetime(),  
-            max_value=max_time.to_pydatetime(),
-            value=(min_time.to_pydatetime(), max_time.to_pydatetime()),
-            format="YYYY-MM-DD HH:mm"
-        )
-
-        glider_data_to_use = glider_data[(glider_data['time'] >= selected_time_range[0]) & 
-                                         (glider_data['time'] <= selected_time_range[1])]
+            glider_data_to_use = glider_data[(glider_data['time'] >= selected_time_range[0]) & 
+                                              (glider_data['time'] <= selected_time_range[1])]
 
     if show_all_drones:
         st.sidebar.subheader("Select Time Range for Drone Data")
@@ -175,14 +198,20 @@ def main():
     # Create map (wider size)
     map_object, legends_html = create_map(glider_data_to_use, drone_data_to_use, selected_iterations, heatmap_opts)
 
-    # Larger map display
-    st_folium(map_object, width=1000, height=700)
+    # Larger map display with legend next to it
+    st.markdown("<div class='map-container'>", unsafe_allow_html=True)
+    st.markdown("<div class='map-content'>", unsafe_allow_html=True)
+    st_folium(map_object, width=700, height=600)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if legends_html:
-        st.components.v1.html(legends_html, height=300)
+        st.markdown(legends_html, unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
+
 
 
 # import pandas as pd
