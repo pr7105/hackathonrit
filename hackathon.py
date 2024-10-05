@@ -274,7 +274,7 @@ def main():
     show_flight_path = st.sidebar.checkbox("Show Flight Paths", key="flight_path_checkbox")
 
     # New checkboxes for cool features
-    show_marker_cluster = st.sidebar.checkbox("Show Marker Clustering", key="marker_cluster_checkbox")
+    show_marker_cluster = st.sidebar.checkbox("Show Glider Marker Clustering", key="marker_cluster_checkbox")
     show_altitude_heatmap = st.sidebar.checkbox("Show Glider Altitude Heatmap", key="altitude_heatmap_checkbox")
     show_time_based_path = st.sidebar.checkbox("Show Glider Path", key="time_based_path_checkbox")
 
